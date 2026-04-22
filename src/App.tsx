@@ -104,7 +104,7 @@ const useObjectUrlCleanup = (value: string | null) => {
 }
 
 function App() {
-  const [config, setConfig] = useState<EditorConfig>(() => loadPersistedConfig())
+  const [config, setConfigState] = useState<EditorConfig>(() => loadPersistedConfig())
   const [analysis, setAnalysis] = useState<AudioAnalysis | null>(null)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(true)
@@ -130,6 +130,15 @@ function App() {
     persistConfig(config)
   }, [config])
 
+  const setConfig: typeof setConfigState = (value) => {
+    if (previewMode === 'preview') {
+      setPreviewMode('editor')
+      setPreviewUrl(null)
+    }
+
+    setConfigState(value)
+  }
+
   useEffect(() => {
     let cancelled = false
 
@@ -140,7 +149,7 @@ function App() {
         }
 
         setAnalysis(nextAnalysis)
-        setConfig((current) => ({
+        setConfigState((current) => ({
           ...current,
           frame: {
             timeSec:
@@ -216,6 +225,11 @@ function App() {
   const runPreviewRender = async (fullDuration = false) => {
     if (!analysis) {
       return
+    }
+
+    if (fullDuration) {
+      setPreviewMode('editor')
+      setPreviewUrl(null)
     }
 
     setRenderError(null)
