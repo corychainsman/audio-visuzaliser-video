@@ -92,8 +92,8 @@ export const InspectorPanel = ({
     : previewDurationMax
 
   return (
-    <aside className="h-full min-h-0 rounded-2xl border border-white/70 bg-card/75 shadow-[0_25px_80px_-50px_rgba(15,23,42,0.5)] backdrop-blur-md">
-      <div className="h-[calc(100vh-8rem)] min-h-[32rem] overflow-y-auto">
+    <aside className="sticky top-0 flex h-full w-[420px] min-w-[420px] max-w-[420px] flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-lg shadow-black/20 backdrop-blur-md">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-4 p-4">
           <AssetsCardSplitMock
             image={config.assets.image}
@@ -708,7 +708,7 @@ export const InspectorPanel = ({
               </div>
             </summary>
             <div className="border-t border-border/70 px-4 py-4">
-              <pre className="max-h-64 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">
+              <pre className="max-h-64 overflow-auto rounded-2xl bg-background p-4 text-xs text-foreground">
                 {command}
               </pre>
             </div>

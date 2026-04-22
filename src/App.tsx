@@ -459,10 +459,10 @@ function App() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen px-4 py-5 md:px-6 lg:px-8">
-        <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-4">
-          <main className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-            <div className="space-y-4">
+      <div className="h-screen overflow-hidden p-4 md:p-6 lg:p-8">
+        <div className="mx-auto flex h-full w-full max-w-[1760px] gap-4">
+          <main className="flex min-w-0 flex-1 gap-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-4">
               <PreviewSurface
                 canvasRef={canvasRef}
                 mode={previewMode}

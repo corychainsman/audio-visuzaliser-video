@@ -89,7 +89,7 @@ export const FrameControls = ({
           variant="outline"
           onClick={onDownloadFullVideo}
           disabled={isBusy}
-          className="px-5 text-base"
+          className="px-5 text-base border-primary ring-primary"
         >
           <Download className="size-4" />
           Download Full Video
