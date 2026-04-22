@@ -9,7 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { NumericControl } from '@/components/editor/numeric-control'
@@ -66,7 +65,7 @@ export const InspectorPanel = ({
 
   return (
     <aside className="h-full min-h-0 rounded-2xl border border-white/70 bg-card/75 shadow-[0_25px_80px_-50px_rgba(15,23,42,0.5)] backdrop-blur-md">
-      <ScrollArea className="h-[calc(100vh-8rem)] min-h-[32rem]">
+      <div className="h-[calc(100vh-8rem)] min-h-[32rem] overflow-y-auto">
         <div className="space-y-4 p-4">
           <Card className="border-border/70 bg-background/70">
             <CardHeader>
@@ -697,7 +696,7 @@ export const InspectorPanel = ({
             </details>
           </Card>
         </div>
-      </ScrollArea>
+      </div>
     </aside>
   )
 }
