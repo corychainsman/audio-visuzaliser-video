@@ -1,4 +1,5 @@
-import { ImageIcon, Music4, RotateCcw, Upload } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ImageIcon, Music4, Play, RotateCcw, Square, Upload } from 'lucide-react'
 
 import { EditorCardHeader } from '@/components/editor/editor-card-header'
 import { Button } from '@/components/ui/button'
@@ -104,25 +105,70 @@ export const AssetsCard = ({
   onReplaceImage,
   onReplaceAudio,
   onResetAll,
-}: AssetsCardProps) => (
-  <Card className="border-border/70 bg-background/70">
-    <EditorCardHeader
-      eyebrow="Project"
-      title="Assets"
-      action={onResetAll ? (
-          <Button
-            variant="destructive"
-            size="sm"
-            type="button"
-            onClick={onResetAll}
-          >
-            <RotateCcw className="size-4" />
-            Reset All
-          </Button>
-      ) : null}
-    />
-    <CardContent className="grid grid-cols-2 gap-3">
-      <Card size="sm" className="space-y-3 border border-border/70 bg-background/60 !pt-0">
+}: AssetsCardProps) => {
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    const audioElement = audioRef.current
+
+    if (!audioElement) {
+      return
+    }
+
+    audioElement.pause()
+    audioElement.currentTime = 0
+    setIsAudioPlaying(false)
+  }, [audio.url])
+
+  const stopAudioPreview = () => {
+    const audioElement = audioRef.current
+
+    if (!audioElement) {
+      return
+    }
+
+    audioElement.pause()
+    audioElement.currentTime = 0
+    setIsAudioPlaying(false)
+  }
+
+  const toggleAudioPreview = async () => {
+    const audioElement = audioRef.current
+
+    if (!audioElement) {
+      return
+    }
+
+    if (isAudioPlaying) {
+      stopAudioPreview()
+      return
+    }
+
+    audioElement.currentTime = 0
+    await audioElement.play()
+    setIsAudioPlaying(true)
+  }
+
+  return (
+    <Card className="border-border/70 bg-background/70">
+      <EditorCardHeader
+        eyebrow="Project"
+        title="Assets"
+        action={onResetAll ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              type="button"
+              onClick={onResetAll}
+            >
+              <RotateCcw className="size-4" />
+              Reset All
+            </Button>
+        ) : null}
+      />
+      <CardContent className="grid grid-cols-2 gap-3">
+        <Card size="sm" className="space-y-3 border border-border/70 bg-background/60 !pt-0">
         <Card
           size="sm"
           className="group relative aspect-square overflow-hidden border border-border/70 bg-transparent p-0 [background-image:linear-gradient(45deg,rgba(255,255,255,0.05)_25%,transparent_25%,transparent_75%,rgba(255,255,255,0.05)_75%,rgba(255,255,255,0.05)),linear-gradient(45deg,rgba(255,255,255,0.05)_25%,transparent_25%,transparent_75%,rgba(255,255,255,0.05)_75%,rgba(255,255,255,0.05))] [background-position:0_0,8px_8px] [background-size:16px_16px]"
@@ -132,62 +178,91 @@ export const AssetsCard = ({
             alt=""
             className="h-full w-full object-contain object-center"
           />
-          <div className="absolute inset-x-3 bottom-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              type="button"
-              className="w-full md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-              onClick={onReplaceImage}
-            >
-              <Upload className="size-4" />
-              Choose Image
-            </Button>
+            <div className="absolute bottom-2 right-2 z-30 md:bottom-3 md:right-3">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                type="button"
+                className="md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onReplaceImage?.()
+                }}
+              >
+                <Upload className="size-4" />
+                <span className="sr-only">Choose image</span>
+              </Button>
+            </div>
+          </Card>
+          <div className="px-2">
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-medium">{image.name}</p>
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {getAssetSummary(image, 'Image')}
+            </p>
           </div>
         </Card>
-        <div className="px-2">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-medium">{image.name}</p>
-          </div>
-          <p className="truncate text-xs text-muted-foreground">
-            {getAssetSummary(image, 'Image')}
-          </p>
-        </div>
-      </Card>
 
-      <Card size="sm" className="space-y-3 border border-border/70 bg-background/60 !pt-0">
+        <Card size="sm" className="space-y-3 border border-border/70 bg-background/60 !pt-0">
         <Card
           size="sm"
-          className="group relative flex aspect-square items-center justify-center overflow-hidden border border-border/70 bg-muted p-3"
+          className="group relative flex aspect-square items-center justify-center overflow-hidden border border-border/70 bg-card p-3"
         >
           <audio
-            controls
+            ref={audioRef}
             preload="metadata"
-            className="w-full max-w-full"
+            className="hidden"
             src={audio.url}
-          />
-          <div className="absolute inset-x-3 bottom-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              type="button"
-              className="w-full md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-              onClick={onReplaceAudio}
-            >
-              <Upload className="size-4" />
-              Choose Audio
-            </Button>
+              onEnded={stopAudioPreview}
+              onPause={() => setIsAudioPlaying(false)}
+              onPlay={() => setIsAudioPlaying(true)}
+            />
+            <div className="relative z-20 flex items-center justify-center">
+              <Button
+                variant="outline"
+                size="icon-lg"
+                type="button"
+                className="p-8"
+                aria-label={isAudioPlaying ? 'Stop audio preview' : 'Play audio preview'}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  void toggleAudioPreview()
+                }}
+              >
+                {isAudioPlaying ? (
+                  <Square className="size-5 fill-current" />
+                ) : (
+                  <Play className="size-5 fill-current" />
+                )}
+              </Button>
+            </div>
+            <div className="absolute bottom-2 right-2 z-30 md:bottom-3 md:right-3">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                type="button"
+                className="md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onReplaceAudio?.()
+                }}
+              >
+                <Upload className="size-4" />
+                <span className="sr-only">Choose audio</span>
+              </Button>
+            </div>
+          </Card>
+          <div className="px-2">
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-medium">{audio.name}</p>
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {getAssetSummary(audio, 'Audio')}
+            </p>
           </div>
         </Card>
-        <div className="px-2">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-medium">{audio.name}</p>
-          </div>
-          <p className="truncate text-xs text-muted-foreground">
-            {getAssetSummary(audio, 'Audio')}
-          </p>
-        </div>
-      </Card>
-    </CardContent>
-  </Card>
-)
+      </CardContent>
+    </Card>
+  )
+}

@@ -36,7 +36,7 @@ export const InspectorFieldGroup = ({
         <div
           className={cn(
             'flex justify-between gap-3',
-            compact ? 'min-h-14 items-center' : 'items-start',
+            compact ? 'h-8 items-center' : 'items-start',
           )}
         >
           <div className="min-w-0">

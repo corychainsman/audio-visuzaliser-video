@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { CardAction, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 type EditorCardHeaderProps = {
@@ -8,6 +8,7 @@ type EditorCardHeaderProps = {
   title: string
   action?: ReactNode
   className?: string
+  titleRowClassName?: string
   titleClassName?: string
   withDivider?: boolean
 }
@@ -17,6 +18,7 @@ export const EditorCardHeader = ({
   title,
   action,
   className,
+  titleRowClassName,
   titleClassName,
   withDivider = true,
 }: EditorCardHeaderProps) => (
@@ -26,9 +28,11 @@ export const EditorCardHeader = ({
         {eyebrow}
       </p>
     ) : null}
-    <CardTitle className={cn('font-heading text-2xl', titleClassName)}>
-      {title}
-    </CardTitle>
-    {action ? <CardAction>{action}</CardAction> : null}
+    <div className={cn('flex items-center justify-between gap-3', titleRowClassName)}>
+      <CardTitle className={cn('font-heading text-2xl', titleClassName)}>
+        {title}
+      </CardTitle>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
   </CardHeader>
 )

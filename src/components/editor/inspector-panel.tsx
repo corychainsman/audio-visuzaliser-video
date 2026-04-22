@@ -1,13 +1,12 @@
 import { useRef, type Dispatch, type SetStateAction } from 'react'
-import { Check, Copy, RotateCcw } from 'lucide-react'
-import { Crosshair, Maximize2 } from 'lucide-react'
+import { AlignCenterHorizontal, AlignCenterVertical, Check, Copy, RotateCcw, StretchHorizontal, StretchVertical } from 'lucide-react'
 
 import { AssetsCard } from '@/components/editor/assets-card'
 import { EditorCardHeader } from '@/components/editor/editor-card-header'
 import { InspectorFieldGroup } from '@/components/editor/inspector-field-group'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
@@ -130,7 +129,7 @@ export const InspectorPanel = ({
                 actions={[
                   {
                     label: 'Maximize width',
-                    icon: <Maximize2 className="size-3.5" />,
+                    icon: <StretchHorizontal className="size-3.5" />,
                     onClick: () =>
                       updateConfig((current) => ({
                         ...current,
@@ -159,7 +158,7 @@ export const InspectorPanel = ({
                 actions={[
                   {
                     label: 'Maximize height',
-                    icon: <Maximize2 className="size-3.5" />,
+                    icon: <StretchVertical className="size-3.5" />,
                     onClick: () =>
                       updateConfig((current) => ({
                         ...current,
@@ -188,7 +187,7 @@ export const InspectorPanel = ({
                 actions={[
                   {
                     label: 'Center horizontally',
-                    icon: <Crosshair className="size-3.5" />,
+                    icon: <AlignCenterHorizontal className="size-3.5" />,
                     onClick: () =>
                       updateConfig((current) => ({
                         ...current,
@@ -217,7 +216,7 @@ export const InspectorPanel = ({
                 actions={[
                   {
                     label: 'Center vertically',
-                    icon: <Crosshair className="size-3.5" />,
+                    icon: <AlignCenterVertical className="size-3.5" />,
                     onClick: () =>
                       updateConfig((current) => ({
                         ...current,
@@ -243,8 +242,8 @@ export const InspectorPanel = ({
 
           <Card className="border-border/70 bg-background/70">
             <EditorCardHeader
-              eyebrow="Bars"
-              title="Spectrum Styling"
+              eyebrow="Spectrum"
+              title="Bar Styling"
               action={
                 <Button
                   variant="ghost"
@@ -258,7 +257,7 @@ export const InspectorPanel = ({
             />
             <CardContent className="space-y-5">
               <NumericControl
-                label="Bar Spacing"
+                label="Spacing"
                 value={config.bars.barSpacingPx}
                 min={0}
                 max={config.render.width/15}
@@ -275,7 +274,7 @@ export const InspectorPanel = ({
               <InspectorFieldGroup
                 label={
                   <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-                    Inferred Bars
+                    Inferred Bar Count
                   </Label>
                 }
                 action={<Badge variant="outline">{inferredBarCount}</Badge>}
@@ -299,13 +298,13 @@ export const InspectorPanel = ({
               <InspectorFieldGroup
                 label={
                   <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-                    Bar Color
+                    Color
                   </Label>
                 }
                 action={
                   <Input
                     type="color"
-                    className="size-10 rounded-lg border-border/70 bg-background/70 p-1"
+                    className="size-8 p-0"
                     value={config.bars.barColor}
                     onChange={(event) =>
                       updateConfig((current) => ({
@@ -375,48 +374,55 @@ export const InspectorPanel = ({
                 }
                 className="rounded-xl border border-border/70 bg-background/70"
               >
-                <div className="flex min-h-14 items-center justify-between gap-3 px-4 py-0">
-                  <div>
-                    <CardTitle className="font-heading text-2xl">Shadow</CardTitle>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {config.shadow.enabled ? (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={resetShadow}
-                      >
-                        <RotateCcw className="size-4" />
-                        <span className="sr-only">Reset shadow</span>
-                      </Button>
-                    ) : null}
-                    <Switch
-                      checked={config.shadow.enabled}
-                      onCheckedChange={(checked) =>
-                        updateConfig((current) => ({
-                          ...current,
-                          shadow: {
-                            ...current.shadow,
-                            enabled: checked,
-                          },
-                        }))
-                      }
-                      aria-label="Shadow"
-                    />
-                  </div>
-                </div>
+                <InspectorFieldGroup
+                  compact
+                  className="rounded-none border-0 bg-transparent ring-0"
+                  contentClassName="px-4"
+                  label={
+                    <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                      Shadow
+                    </Label>
+                  }
+                  action={
+                    <div className="flex items-center gap-2">
+                      {config.shadow.enabled ? (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={resetShadow}
+                        >
+                          <RotateCcw className="size-4" />
+                          <span className="sr-only">Reset shadow</span>
+                        </Button>
+                      ) : null}
+                      <Switch
+                        checked={config.shadow.enabled}
+                        onCheckedChange={(checked) =>
+                          updateConfig((current) => ({
+                            ...current,
+                            shadow: {
+                              ...current.shadow,
+                              enabled: checked,
+                            },
+                          }))
+                        }
+                        aria-label="Shadow"
+                      />
+                    </div>
+                  }
+                />
                 <CollapsibleContent className="border-t border-border/70 px-4 py-4">
                   <div className="space-y-5">
                     <InspectorFieldGroup
                       label={
                         <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-                          Shadow Color
+                          Color
                         </Label>
                       }
                       action={
                         <Input
                           type="color"
-                          className="size-10 rounded-lg border-border/70 bg-background/70 p-1"
+                          className="size-8 p-0"
                           value={config.shadow.color}
                           onChange={(event) =>
                             updateConfig((current) => ({
@@ -432,7 +438,7 @@ export const InspectorPanel = ({
                       compact
                     />
                     <NumericControl
-                      label="Shadow Blur"
+                      label="Blur"
                       value={config.shadow.blurPx}
                       min={0}
                       max={50}
@@ -447,7 +453,7 @@ export const InspectorPanel = ({
                       }
                     />
                     <NumericControl
-                      label="Shadow Offset X"
+                      label="Offset X"
                       value={config.shadow.offsetXPx}
                       min={-60}
                       max={60}
@@ -462,7 +468,7 @@ export const InspectorPanel = ({
                       }
                     />
                     <NumericControl
-                      label="Shadow Offset Y"
+                      label="Offset Y"
                       value={config.shadow.offsetYPx}
                       min={-60}
                       max={60}
@@ -477,7 +483,7 @@ export const InspectorPanel = ({
                       }
                     />
                     <NumericControl
-                      label="Shadow Opacity"
+                      label="Opacity"
                       value={config.shadow.opacity}
                       min={0}
                       max={1}
