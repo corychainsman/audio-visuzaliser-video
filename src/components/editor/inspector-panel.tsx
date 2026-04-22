@@ -2,10 +2,12 @@ import { useRef, type Dispatch, type SetStateAction } from 'react'
 import { Check, Copy, RotateCcw } from 'lucide-react'
 import { Crosshair, Maximize2 } from 'lucide-react'
 
-import { AssetsCardSplitMock } from '@/components/editor/assets-card-mocks'
+import { AssetsCard } from '@/components/editor/assets-card'
+import { EditorCardHeader } from '@/components/editor/editor-card-header'
+import { InspectorFieldGroup } from '@/components/editor/inspector-field-group'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
@@ -85,17 +87,18 @@ export const InspectorPanel = ({
     || config.assets.audio.kind !== bundledAssets.audio.kind
     || config.assets.audio.name !== bundledAssets.audio.name
     || config.assets.audio.url !== bundledAssets.audio.url
-  const previewDurationMax = Math.max(1, Math.min(8, durationSec || 8))
-  const previewDurationValue = Number.isFinite(config.render.previewDurationSec)
-    && config.render.previewDurationSec > 0
-    ? config.render.previewDurationSec
-    : previewDurationMax
+  const remainingPreviewDurationSec = Math.max(0, durationSec - config.frame.timeSec)
+  const previewDurationMax = Math.max(remainingPreviewDurationSec, 0.01)
+  const previewDurationValue =
+    Number.isFinite(config.render.previewDurationSec)
+      && config.render.previewDurationSec > 0
+      ? Math.min(config.render.previewDurationSec, previewDurationMax)
+      : previewDurationMax
 
   return (
-    <aside className="sticky top-0 flex h-full w-[420px] min-w-[420px] max-w-[420px] flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-lg shadow-black/20 backdrop-blur-md">
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="space-y-4 p-4">
-          <AssetsCardSplitMock
+    <Card className="h-full w-full min-w-0 border border-border/70 bg-card/80 shadow-lg shadow-black/20 backdrop-blur-md md:sticky md:top-0 md:w-[420px] md:min-w-[420px] md:max-w-[420px]">
+      <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+          <AssetsCard
             image={config.assets.image}
             audio={config.assets.audio}
             onReplaceImage={onUploadImage}
@@ -104,22 +107,20 @@ export const InspectorPanel = ({
           />
 
           <Card className="border-border/70 bg-background/70">
-            <CardHeader>
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Geometry</p>
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="font-heading text-2xl">Placement</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={resetPlacement}
-                  >
-                    <RotateCcw className="size-4" />
-                    <span className="sr-only">Reset geometry</span>
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
+            <EditorCardHeader
+              eyebrow="Geometry"
+              title="Placement"
+              action={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={resetPlacement}
+                >
+                  <RotateCcw className="size-4" />
+                  <span className="sr-only">Reset geometry</span>
+                </Button>
+              }
+            />
             <CardContent className="space-y-5">
               <NumericControl
                 label="Width"
@@ -241,16 +242,10 @@ export const InspectorPanel = ({
           </Card>
 
           <Card className="border-border/70 bg-background/70">
-            <CardHeader>
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Bars</p>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <CardTitle className="font-heading text-2xl">Spectrum Styling</CardTitle>
-                </div>
+            <EditorCardHeader
+              eyebrow="Bars"
+              title="Spectrum Styling"
+              action={
                 <Button
                   variant="ghost"
                   size="icon-sm"
@@ -259,7 +254,9 @@ export const InspectorPanel = ({
                   <RotateCcw className="size-4" />
                   <span className="sr-only">Reset spectrum styling</span>
                 </Button>
-              </div>
+              }
+            />
+            <CardContent className="space-y-5">
               <NumericControl
                 label="Bar Spacing"
                 value={config.bars.barSpacingPx}
@@ -275,17 +272,15 @@ export const InspectorPanel = ({
                   }))
                 }
               />
-              <div className="flex items-center justify-between rounded-lg border border-border/70 bg-background/70 px-3 py-2.5">
-                <div>
+              <InspectorFieldGroup
+                label={
                   <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
                     Inferred Bars
                   </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Derived from width and spacing.
-                  </p>
-                </div>
-                <Badge variant="outline">{inferredBarCount}</Badge>
-              </div>
+                }
+                action={<Badge variant="outline">{inferredBarCount}</Badge>}
+                compact
+              />
               <NumericControl
                 label="Corner Radius"
                 value={config.bars.cornerRadiusPx}
@@ -301,11 +296,13 @@ export const InspectorPanel = ({
                   }))
                 }
               />
-              <div className="rounded-lg border border-border/70 bg-background/70 p-3">
-                <div className="flex items-center justify-between gap-3">
+              <InspectorFieldGroup
+                label={
                   <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
                     Bar Color
                   </Label>
+                }
+                action={
                   <Input
                     type="color"
                     className="size-10 rounded-lg border-border/70 bg-background/70 p-1"
@@ -320,8 +317,9 @@ export const InspectorPanel = ({
                       }))
                     }
                   />
-                </div>
-              </div>
+                }
+                compact
+              />
               <NumericControl
                 label="Opacity"
                 value={config.bars.opacity}
@@ -338,14 +336,16 @@ export const InspectorPanel = ({
                   }))
                 }
               />
-              <div className="rounded-lg border border-border/70 bg-background/70 p-3">
-                <div className="flex min-h-10 items-center justify-between gap-3">
+              <InspectorFieldGroup
+                label={
                   <Label
                     htmlFor="bars-mirror"
                     className="text-xs uppercase tracking-[0.28em] text-muted-foreground"
                   >
                     Mirror
                   </Label>
+                }
+                action={
                   <Checkbox
                     id="bars-mirror"
                     checked={config.bars.mirror}
@@ -359,8 +359,9 @@ export const InspectorPanel = ({
                       }))
                     }
                   />
-                </div>
-              </div>
+                }
+                compact
+              />
               <Collapsible
                 open={config.shadow.enabled}
                 onOpenChange={(open) =>
@@ -374,7 +375,7 @@ export const InspectorPanel = ({
                 }
                 className="rounded-xl border border-border/70 bg-background/70"
               >
-                <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+                <div className="flex min-h-14 items-center justify-between gap-3 px-4 py-0">
                   <div>
                     <CardTitle className="font-heading text-2xl">Shadow</CardTitle>
                   </div>
@@ -406,25 +407,30 @@ export const InspectorPanel = ({
                 </div>
                 <CollapsibleContent className="border-t border-border/70 px-4 py-4">
                   <div className="space-y-5">
-                    <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-                        Shadow Color
-                      </Label>
-                      <Input
-                        type="color"
-                        className="h-12 w-full bg-background/70"
-                        value={config.shadow.color}
-                        onChange={(event) =>
-                          updateConfig((current) => ({
-                            ...current,
-                            shadow: {
-                              ...current.shadow,
-                              color: event.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
+                    <InspectorFieldGroup
+                      label={
+                        <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                          Shadow Color
+                        </Label>
+                      }
+                      action={
+                        <Input
+                          type="color"
+                          className="size-10 rounded-lg border-border/70 bg-background/70 p-1"
+                          value={config.shadow.color}
+                          onChange={(event) =>
+                            updateConfig((current) => ({
+                              ...current,
+                              shadow: {
+                                ...current.shadow,
+                                color: event.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      }
+                      compact
+                    />
                     <NumericControl
                       label="Shadow Blur"
                       value={config.shadow.blurPx}
@@ -493,75 +499,61 @@ export const InspectorPanel = ({
           </Card>
 
           <Card className="border-border/70 bg-background/70">
-            <CardHeader>
-              <div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Render</p>
-                  <div className="flex items-center justify-between gap-3">
-                    <CardTitle className="font-heading text-2xl">Video output</CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() =>
-                        updateConfig((current) => ({
-                          ...current,
-                          render: {
-                            ...current.render,
-                            ...createDefaultConfig().render,
-                          },
-                        }))
-                      }
-                    >
-                      <RotateCcw className="size-4" />
-                      <span className="sr-only">Reset render settings</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
+            <EditorCardHeader
+              eyebrow="Render"
+              title="Video Output"
+              action={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() =>
+                    updateConfig((current) => ({
+                      ...current,
+                      render: {
+                        ...current.render,
+                        ...createDefaultConfig().render,
+                      },
+                    }))
+                  }
+                >
+                  <RotateCcw className="size-4" />
+                  <span className="sr-only">Reset render settings</span>
+                </Button>
+              }
+            />
             <CardContent className="space-y-5">
               <NumericControl
                 label="Preview Duration"
                 value={previewDurationValue}
-                min={1}
+                min={0}
                 max={previewDurationMax}
                 step={0.25}
-                hint={
-                  config.render.previewDurationSec === PREVIEW_DURATION_INFINITE
-                    ? '∞ uses the full remaining audio from the selected frame'
-                    : '∞ uses the full remaining audio from the selected frame'
-                }
-                actions={[
-                  {
-                    label: 'Use full preview',
-                    icon: <span className="text-[0.7rem] font-semibold">∞</span>,
-                    onClick: () =>
-                      updateConfig((current) => ({
-                        ...current,
-                        render: {
-                          ...current.render,
-                          previewDurationSec: PREVIEW_DURATION_INFINITE,
-                        },
-                      })),
-                  },
-                ]}
+                inputDisplayValue={String(Math.round(previewDurationValue))}
+                onInputDisplayChange={(rawValue: string) => {
+                  const nextValue = Number(rawValue)
+
+                  return Number.isFinite(nextValue) ? nextValue : null
+                }}
                 onChange={(value) =>
                       updateConfig((current) => ({
                         ...current,
                         render: {
                           ...current.render,
-                          previewDurationSec: clamp(value, 1, previewDurationMax),
+                          previewDurationSec:
+                            value >= previewDurationMax
+                              ? PREVIEW_DURATION_INFINITE
+                              : clamp(value, 0, previewDurationMax),
                         },
                       }))
                   }
               />
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <Label className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                      Output format
-                    </Label>
-                  </div>
+              <InspectorFieldGroup
+                label={
+                  <Label className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
+                    Format
+                  </Label>
+                }
+                action={
                   <ToggleGroup
                     type="single"
                     value={config.render.preferredFormat}
@@ -582,15 +574,16 @@ export const InspectorPanel = ({
                     <ToggleGroupItem value="mp4">MP4</ToggleGroupItem>
                     <ToggleGroupItem value="webm">WebM</ToggleGroupItem>
                   </ToggleGroup>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <Label className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                      FPS
-                    </Label>
-                  </div>
+                }
+                compact
+              />
+              <InspectorFieldGroup
+                label={
+                  <Label className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
+                    FPS
+                  </Label>
+                }
+                action={
                   <ToggleGroup
                     type="single"
                     value={String(config.render.fps)}
@@ -612,25 +605,30 @@ export const InspectorPanel = ({
                     <ToggleGroupItem value="30">30</ToggleGroupItem>
                     <ToggleGroupItem value="60">60</ToggleGroupItem>
                   </ToggleGroup>
-                </div>
-              </div>
+                }
+                compact
+              />
             </CardContent>
           </Card>
 
           <Card className="border-border/70 bg-background/70">
-            <details>
-            <summary className="flex cursor-pointer list-none flex-wrap items-start justify-between gap-3 px-4 py-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Config Token</p>
-                <p className="font-heading text-2xl">Share token</p>
-              </div>
+            <details open>
+            <summary className="list-none">
+              <EditorCardHeader
+                eyebrow="Share"
+                title="Config Token"
+                withDivider={false}
+                className="cursor-pointer"
+              />
             </summary>
             <div className="space-y-4 border-t border-border/70 px-4 py-4">
-              <div className="space-y-2 rounded-2xl border border-border/70 bg-background/60 p-3">
-                <div className="flex items-start justify-between gap-3">
+              <InspectorFieldGroup
+                label={
                   <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
                     Current token
                   </Label>
+                }
+                action={
                   <Button
                     variant="outline"
                     size="sm"
@@ -643,7 +641,8 @@ export const InspectorPanel = ({
                     <Copy className="size-4" />
                     Copy
                   </Button>
-                </div>
+                }
+              >
                 <textarea
                   key={configToken}
                   readOnly
@@ -652,12 +651,14 @@ export const InspectorPanel = ({
                   value={configToken}
                   spellCheck={false}
                 />
-              </div>
-              <div className="space-y-2 rounded-2xl border border-border/70 bg-background/60 p-3">
-                <div className="flex items-start justify-between gap-3">
+              </InspectorFieldGroup>
+              <InspectorFieldGroup
+                label={
                   <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
                     Apply token
                   </Label>
+                }
+                action={
                   <Button
                     variant="outline"
                     size="sm"
@@ -672,7 +673,8 @@ export const InspectorPanel = ({
                     <Check className="size-4" />
                     Apply
                   </Button>
-                </div>
+                }
+              >
                 <textarea
                   ref={configTokenApplyInputRef}
                   rows={1}
@@ -680,18 +682,20 @@ export const InspectorPanel = ({
                   placeholder="Paste a token to restore a saved config"
                   spellCheck={false}
                 />
-              </div>
+              </InspectorFieldGroup>
             </div>
             </details>
           </Card>
 
           <Card className="border-border/70 bg-background/70">
-            <details>
-            <summary className="cursor-pointer list-none px-4 py-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Desktop ffmpeg command</p>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-heading text-2xl">Copyable shell command</p>
+            <details open>
+            <summary className="list-none">
+              <EditorCardHeader
+                eyebrow="Desktop"
+                title="FFmpeg Command"
+                withDivider={false}
+                className="cursor-pointer"
+                action={
                   <Button
                     variant="outline"
                     size="sm"
@@ -704,8 +708,8 @@ export const InspectorPanel = ({
                     <Copy className="size-4" />
                     Copy
                   </Button>
-                </div>
-              </div>
+                }
+              />
             </summary>
             <div className="border-t border-border/70 px-4 py-4">
               <pre className="max-h-64 overflow-auto rounded-2xl bg-background p-4 text-xs text-foreground">
@@ -714,8 +718,7 @@ export const InspectorPanel = ({
             </div>
             </details>
           </Card>
-        </div>
-      </div>
-    </aside>
+      </CardContent>
+    </Card>
   )
 }

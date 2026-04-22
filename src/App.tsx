@@ -101,7 +101,6 @@ const useObjectUrlCleanup = (value: string | null) => {
 function App() {
   const [config, setConfigState] = useState<EditorConfig>(() => loadPersistedConfig())
   const [analysis, setAnalysis] = useState<AudioAnalysis | null>(null)
-  const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(true)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState<'editor' | 'preview'>('editor')
@@ -109,8 +108,6 @@ function App() {
   const [renderProgress, setRenderProgress] = useState(0)
   const [renderProgressMessage, setRenderProgressMessage] = useState('')
   const [renderTimings, setRenderTimings] = useState<RenderPhaseTimings | null>(null)
-  const [renderError, setRenderError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const [resetOpen, setResetOpen] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
@@ -134,6 +131,15 @@ function App() {
 
     setConfigState(value)
   }
+
+  const showAnalysisError = (message: string) =>
+    toast.error(message, { id: 'analysis-error' })
+
+  const showRenderError = (message: string) =>
+    toast.error(message, { id: 'render-error' })
+
+  const showNotice = (message: string) =>
+    toast.success(message, { id: 'app-notice' })
 
   useEffect(() => {
     let cancelled = false
@@ -161,7 +167,7 @@ function App() {
       })
       .catch((error) => {
         if (!cancelled) {
-          setAnalysisError(
+          showAnalysisError(
             error instanceof Error ? error.message : 'Audio analysis failed.',
           )
         }
@@ -200,7 +206,7 @@ function App() {
       })
       .catch((error) => {
         if (!cancelled) {
-          setRenderError(error instanceof Error ? error.message : 'Preview failed.')
+          showRenderError(error instanceof Error ? error.message : 'Preview failed.')
         }
       })
 
@@ -208,33 +214,6 @@ function App() {
       cancelled = true
     }
   }, [analysis, config])
-
-  useEffect(() => {
-    if (!analysisError) {
-      return
-    }
-
-    toast.error(analysisError, { id: 'analysis-error' })
-    setAnalysisError(null)
-  }, [analysisError])
-
-  useEffect(() => {
-    if (!renderError) {
-      return
-    }
-
-    toast.error(renderError, { id: 'render-error' })
-    setRenderError(null)
-  }, [renderError])
-
-  useEffect(() => {
-    if (!notice) {
-      return
-    }
-
-    toast.success(notice, { id: 'app-notice' })
-    setNotice(null)
-  }, [notice])
 
   const stopPreview = () => {
     setPreviewMode('editor')
@@ -255,7 +234,6 @@ function App() {
       setPreviewUrl(null)
     }
 
-    setRenderError(null)
     setIsRendering(true)
     setRenderProgress(0)
     setRenderProgressMessage(
@@ -295,18 +273,18 @@ function App() {
 
       if (fullDuration) {
         createDownload(result.url, result.fileName)
-        setNotice(`Saved ${result.fileName}`)
+        showNotice(`Saved ${result.fileName}`)
       } else {
         setPreviewUrl(result.url)
         setPreviewMode('preview')
       }
     } catch (error) {
       if (error instanceof RenderCanceledError) {
-        setNotice('Render canceled')
+        showNotice('Render canceled')
         return
       }
 
-      setRenderError(
+      showRenderError(
         error instanceof Error
           ? error.message
           : 'Media generation failed due to codec or memory limits.',
@@ -388,7 +366,7 @@ function App() {
 
   const copyText = async (value: string, message: string) => {
     await navigator.clipboard.writeText(value)
-    setNotice(message)
+    showNotice(message)
   }
 
   const applyConfigToken = (value: string) => {
@@ -396,9 +374,7 @@ function App() {
 
     setConfig(nextConfig)
     setIsAnalyzing(true)
-    setAnalysisError(null)
-    setRenderError(null)
-    setNotice('Config applied')
+    showNotice('Config applied')
   }
 
   const updateAsset = (kind: 'image' | 'audio', file: File) => {
@@ -429,13 +405,13 @@ function App() {
     }))
     if (kind === 'audio') {
       setIsAnalyzing(true)
-      setAnalysisError(null)
     }
     setPreviewMode('editor')
     setPreviewUrl(null)
   }
 
   const durationSec = analysis?.durationSec ?? 0
+  const previewAspectRatio = config.render.width / config.render.height
   const renderTimingSummary =
     import.meta.env.DEV && renderTimings
       ? `Export timing: prep ${formatTimingMs(renderTimings.framePrepMs)}, encode ${formatTimingMs(
@@ -459,12 +435,13 @@ function App() {
 
   return (
     <TooltipProvider>
-      <div className="h-screen overflow-hidden p-4 md:p-6 lg:p-8">
-        <div className="mx-auto flex h-full w-full max-w-[1760px] gap-4">
-          <main className="flex min-w-0 flex-1 gap-4">
-            <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="h-dvh overflow-hidden p-3 md:h-screen md:p-6 lg:p-8">
+        <div className="flex h-full w-full">
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden md:flex-row md:gap-4">
+            <div className="flex min-w-0 shrink-0 flex-col gap-3 md:min-h-0 md:flex-1 md:gap-4">
               <PreviewSurface
                 canvasRef={canvasRef}
+                aspectRatio={previewAspectRatio}
                 mode={previewMode}
                 previewUrl={previewUrl}
                 isBusy={isRendering}
@@ -526,7 +503,7 @@ function App() {
                 try {
                   applyConfigToken(value)
                 } catch (error) {
-                  setRenderError(
+                  showRenderError(
                     error instanceof Error ? error.message : 'Config token is invalid.',
                   )
                 }
@@ -586,7 +563,6 @@ function App() {
                 onClick={() => {
                   clearPersistedConfig()
                   setIsAnalyzing(true)
-                  setAnalysisError(null)
                   setConfig(createDefaultConfig())
                   stopPreview()
                   setResetOpen(false)

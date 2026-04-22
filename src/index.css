@@ -109,6 +109,16 @@ textarea {
   min-height: 100vh;
 }
 
+.preview-surface {
+  aspect-ratio: var(--preview-aspect, 16 / 9);
+}
+
+@media (min-width: 768px) {
+  .preview-surface {
+    aspect-ratio: auto;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

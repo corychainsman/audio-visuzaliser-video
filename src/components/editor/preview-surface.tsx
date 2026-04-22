@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import type { CSSProperties, RefObject } from 'react'
 
 import { Film } from 'lucide-react'
 
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 
 type PreviewSurfaceProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>
+  aspectRatio: number
   mode: 'editor' | 'preview'
   previewUrl: string | null
   isBusy: boolean
@@ -19,6 +20,7 @@ type PreviewSurfaceProps = {
 
 export const PreviewSurface = ({
   canvasRef,
+  aspectRatio,
   mode,
   previewUrl,
   isBusy,
@@ -26,7 +28,10 @@ export const PreviewSurface = ({
   progressMessage,
   onCancel,
 }: PreviewSurfaceProps) => (
-  <section className="relative min-h-0 flex-1 overflow-hidden rounded-3xl border border-border/70 bg-background/60 shadow-lg shadow-black/20">
+  <Card
+    className="preview-surface relative w-full border border-border/70 bg-background/60 p-0 shadow-lg shadow-black/20 md:min-h-0 md:flex-1"
+    style={{ '--preview-aspect': `${aspectRatio}` } as CSSProperties}
+  >
     <div className="absolute inset-0 bg-transparent [background-image:linear-gradient(45deg,rgba(255,255,255,0.05)_25%,transparent_25%,transparent_75%,rgba(255,255,255,0.05)_75%,rgba(255,255,255,0.05)),linear-gradient(45deg,rgba(255,255,255,0.05)_25%,transparent_25%,transparent_75%,rgba(255,255,255,0.05)_75%,rgba(255,255,255,0.05))] [background-position:0_0,8px_8px] [background-size:16px_16px]" />
     <canvas
       ref={canvasRef}
@@ -68,5 +73,5 @@ export const PreviewSurface = ({
         </Card>
       </div>
     ) : null}
-  </section>
+  </Card>
 )
