@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { Copy, Download, RotateCcw } from 'lucide-react'
+import { ClipboardPaste, Copy, Download, RotateCcw, Upload } from 'lucide-react'
 import { Crosshair, Maximize2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -29,6 +29,8 @@ type InspectorPanelProps = {
   command: string
   onResetAll: () => void
   onExportConfig: () => void
+  onImportConfigFile: () => void
+  onPasteConfig: () => void
   onCopyConfig: () => void
   onCopyCommand: () => void
 }
@@ -44,6 +46,8 @@ export const InspectorPanel = ({
   command,
   onResetAll,
   onExportConfig,
+  onImportConfigFile,
+  onPasteConfig,
   onCopyConfig,
   onCopyCommand,
 }: InspectorPanelProps) => {
@@ -607,6 +611,30 @@ export const InspectorPanel = ({
                 <p className="font-heading text-2xl">Export surface</p>
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    onImportConfigFile()
+                  }}
+                >
+                  <Upload className="size-4" />
+                  Upload JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    onPasteConfig()
+                  }}
+                >
+                  <ClipboardPaste className="size-4" />
+                  Paste JSON
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
