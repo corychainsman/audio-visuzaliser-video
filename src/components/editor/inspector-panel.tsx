@@ -1,5 +1,5 @@
-import type { Dispatch, SetStateAction } from 'react'
-import { ClipboardPaste, Copy, Download, RotateCcw, Upload } from 'lucide-react'
+import { useRef, type Dispatch, type SetStateAction } from 'react'
+import { Check, Copy, RotateCcw } from 'lucide-react'
 import { Crosshair, Maximize2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -22,15 +22,13 @@ import {
 
 type InspectorPanelProps = {
   config: EditorConfig
+  configToken: string
   durationSec: number
   setConfig: Dispatch<SetStateAction<EditorConfig>>
-  serializedConfig: string
   command: string
   onResetAll: () => void
-  onExportConfig: () => void
-  onImportConfigFile: () => void
-  onPasteConfig: () => void
-  onCopyConfig: () => void
+  onApplyConfigToken: (value: string) => void
+  onCopyConfigToken: () => void
   onCopyCommand: () => void
 }
 
@@ -39,19 +37,18 @@ const sectionTitleClassName =
 
 export const InspectorPanel = ({
   config,
+  configToken,
   durationSec,
   setConfig,
-  serializedConfig,
   command,
   onResetAll,
-  onExportConfig,
-  onImportConfigFile,
-  onPasteConfig,
-  onCopyConfig,
+  onApplyConfigToken,
+  onCopyConfigToken,
   onCopyCommand,
 }: InspectorPanelProps) => {
   const updateConfig = (updater: (current: EditorConfig) => EditorConfig) =>
     setConfig((current) => updater(current))
+  const configTokenApplyInputRef = useRef<HTMLTextAreaElement | null>(null)
   const defaultConfig = createDefaultConfig()
   const inferredBarCount = inferBarCount(
     config.geometry.width,
@@ -477,27 +474,29 @@ export const InspectorPanel = ({
 
           <Card className="border-border/70 bg-background/70">
             <CardHeader>
-              <div className="flex items-start justify-between gap-3">
+              <div>
                 <div>
                   <p className={sectionTitleClassName}>Render</p>
-                  <CardTitle className="font-heading text-2xl">Video output</CardTitle>
+                  <div className="flex items-center justify-between gap-3">
+                    <CardTitle className="font-heading text-2xl">Video output</CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() =>
+                        updateConfig((current) => ({
+                          ...current,
+                          render: {
+                            ...current.render,
+                            ...createDefaultConfig().render,
+                          },
+                        }))
+                      }
+                    >
+                      <RotateCcw className="size-4" />
+                      <span className="sr-only">Reset render settings</span>
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() =>
-                    updateConfig((current) => ({
-                      ...current,
-                      render: {
-                        ...current.render,
-                        ...createDefaultConfig().render,
-                      },
-                    }))
-                  }
-                >
-                  <RotateCcw className="size-4" />
-                  <span className="sr-only">Reset render settings</span>
-                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -606,87 +605,91 @@ export const InspectorPanel = ({
             <details>
             <summary className="flex cursor-pointer list-none flex-wrap items-start justify-between gap-3 px-4 py-3">
               <div>
-                <p className={sectionTitleClassName}>Normalized Config</p>
-                <p className="font-heading text-2xl">Export surface</p>
-              </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    onImportConfigFile()
-                  }}
-                >
-                  <Upload className="size-4" />
-                  Upload JSON
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    onPasteConfig()
-                  }}
-                >
-                  <ClipboardPaste className="size-4" />
-                  Paste JSON
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    onExportConfig()
-                  }}
-                >
-                  <Download className="size-4" />
-                  Download JSON
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    onCopyConfig()
-                  }}
-                >
-                  <Copy className="size-4" />
-                  Copy
-                </Button>
+                <p className={sectionTitleClassName}>Config Token</p>
+                <p className="font-heading text-2xl">Share token</p>
               </div>
             </summary>
-            <div className="border-t border-border/70 px-4 py-4">
-              <pre className="max-h-80 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">
-                {serializedConfig}
-              </pre>
+            <div className="space-y-4 border-t border-border/70 px-4 py-4">
+              <div className="space-y-2 rounded-2xl border border-border/70 bg-background/60 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                    Current token
+                  </Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      onCopyConfigToken()
+                    }}
+                  >
+                    <Copy className="size-4" />
+                    Copy
+                  </Button>
+                </div>
+                <textarea
+                  key={configToken}
+                  readOnly
+                  rows={1}
+                  className="resize-none w-full rounded-2xl border border-border/70 bg-background px-3 py-2 font-mono text-xs text-foreground outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  value={configToken}
+                  spellCheck={false}
+                />
+              </div>
+              <div className="space-y-2 rounded-2xl border border-border/70 bg-background/60 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                    Apply token
+                  </Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      onApplyConfigToken(
+                        configTokenApplyInputRef.current?.value ?? '',
+                      )
+                    }}
+                  >
+                    <Check className="size-4" />
+                    Apply
+                  </Button>
+                </div>
+                <textarea
+                  ref={configTokenApplyInputRef}
+                  rows={1}
+                  className="resize-none w-full rounded-2xl border border-border/70 bg-background px-3 py-2 font-mono text-xs text-foreground outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  placeholder="Paste a token to restore a saved config"
+                  spellCheck={false}
+                />
+              </div>
             </div>
             </details>
           </Card>
 
           <Card className="border-border/70 bg-background/70">
             <details>
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+            <summary className="cursor-pointer list-none px-4 py-3">
               <div>
                 <p className={sectionTitleClassName}>Desktop ffmpeg command</p>
-                <p className="font-heading text-2xl">Copyable shell command</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-heading text-2xl">Copyable shell command</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      onCopyCommand()
+                    }}
+                  >
+                    <Copy className="size-4" />
+                    Copy
+                  </Button>
+                </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                type="button"
-                onClick={(event) => {
-                  event.preventDefault()
-                  onCopyCommand()
-                }}
-              >
-                <Copy className="size-4" />
-                Copy
-              </Button>
             </summary>
             <div className="border-t border-border/70 px-4 py-4">
               <pre className="max-h-64 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">

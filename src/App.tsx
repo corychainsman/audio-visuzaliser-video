@@ -38,13 +38,13 @@ import {
   clearPersistedConfig,
   loadPersistedConfig,
   persistConfig,
+  parseConfigToken,
+  serializeConfigToken,
 } from '@/lib/state/persistence'
 import {
   clamp,
   PREVIEW_DURATION_INFINITE,
   createDefaultConfig,
-  normalizeConfig,
-  normalizePersistedConfig,
   type AssetSource,
   type EditorConfig,
 } from '@/lib/state/schema'
@@ -63,9 +63,6 @@ const createDownload = (url: string, fileName: string) => {
     window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
   }
 }
-
-const serializeConfig = (config: EditorConfig) =>
-  JSON.stringify(normalizeConfig(config), null, 2)
 
 const formatTimingMs = (value: number) =>
   value < 1000 ? `${Math.round(value)}ms` : `${(value / 1000).toFixed(2)}s`
@@ -121,7 +118,6 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
   const audioInputRef = useRef<HTMLInputElement | null>(null)
-  const configImportInputRef = useRef<HTMLInputElement | null>(null)
   const renderAbortControllerRef = useRef<AbortController | null>(null)
 
   useObjectUrlCleanup(previewUrl)
@@ -363,48 +359,21 @@ function App() {
     () => createDesktopFfmpegCommand(config, analysis),
     [analysis, config],
   )
-  const serializedConfig = useMemo(() => serializeConfig(config), [config])
+  const configToken = useMemo(() => serializeConfigToken(config), [config])
 
   const copyText = async (value: string, message: string) => {
     await navigator.clipboard.writeText(value)
     setNotice(message)
   }
 
-  const exportConfig = () => {
-    const blob = new Blob([serializedConfig], { type: 'application/json' })
-    createDownload(URL.createObjectURL(blob), 'audio-visualizer-config.json')
-    setNotice('Config exported')
-  }
-
-  const applyImportedConfig = (rawConfig: string) => {
-    const parsed = JSON.parse(rawConfig) as Partial<EditorConfig>
-    const nextConfig = normalizePersistedConfig(parsed)
+  const applyConfigToken = (value: string) => {
+    const nextConfig = parseConfigToken(value)
 
     setConfig(nextConfig)
     setIsAnalyzing(true)
     setAnalysisError(null)
     setRenderError(null)
-    setNotice('Config imported')
-  }
-
-  const importConfigFile = async (file: File) => {
-    try {
-      await applyImportedConfig(await file.text())
-    } catch (error) {
-      setRenderError(
-        error instanceof Error ? error.message : 'Config import failed.',
-      )
-    }
-  }
-
-  const pasteConfigFromClipboard = async () => {
-    try {
-      await applyImportedConfig(await navigator.clipboard.readText())
-    } catch (error) {
-      setRenderError(
-        error instanceof Error ? error.message : 'Clipboard import failed.',
-      )
-    }
+    setNotice('Config applied')
   }
 
   const updateAsset = (kind: 'image' | 'audio', file: File) => {
@@ -455,16 +424,6 @@ function App() {
     <TooltipProvider>
       <div className="min-h-screen px-4 py-5 md:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-4">
-          <ActionBar
-            isPlaying={previewMode === 'preview'}
-            isBusy={isRendering || isAnalyzing}
-            onPlay={() => void runPreviewRender(false)}
-            onStop={stopPreview}
-            onGenerateVideo={() => void runPreviewRender(true)}
-            onUploadAudio={() => audioInputRef.current?.click()}
-            onUploadImage={() => imageInputRef.current?.click()}
-          />
-
           <main className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
             <div className="space-y-4">
               <PreviewSurface
@@ -477,9 +436,18 @@ function App() {
                 onCancel={cancelRender}
               />
 
+              <ActionBar
+                isBusy={isRendering || isAnalyzing}
+                onGenerateVideo={() => void runPreviewRender(true)}
+                onUploadAudio={() => audioInputRef.current?.click()}
+                onUploadImage={() => imageInputRef.current?.click()}
+              />
+
               <FrameControls
                 durationSec={durationSec}
                 frameTimeSec={config.frame.timeSec}
+                isPlaying={previewMode === 'preview'}
+                isBusy={isRendering || isAnalyzing}
                 onChange={(value) =>
                   setConfig((current) => ({
                     ...current,
@@ -508,6 +476,8 @@ function App() {
                     },
                   }))
                 }}
+                onPlay={() => void runPreviewRender(false)}
+                onStop={stopPreview}
               />
 
               {analysisError || renderError ? (
@@ -538,16 +508,22 @@ function App() {
 
             <InspectorPanel
               config={config}
+              configToken={configToken}
               durationSec={durationSec}
               setConfig={setConfig}
-              serializedConfig={serializedConfig}
               command={command}
               onResetAll={() => setResetOpen(true)}
-              onExportConfig={exportConfig}
-              onImportConfigFile={() => configImportInputRef.current?.click()}
-              onPasteConfig={() => void pasteConfigFromClipboard()}
-              onCopyConfig={() =>
-                void copyText(serializedConfig, 'Config copied to clipboard')
+              onApplyConfigToken={(value) => {
+                try {
+                  applyConfigToken(value)
+                } catch (error) {
+                  setRenderError(
+                    error instanceof Error ? error.message : 'Config token is invalid.',
+                  )
+                }
+              }}
+              onCopyConfigToken={() =>
+                void copyText(configToken, 'Config token copied to clipboard')
               }
               onCopyCommand={() =>
                 void copyText(command, 'Command copied to clipboard')
@@ -555,20 +531,6 @@ function App() {
             />
           </main>
         </div>
-
-        <input
-          ref={configImportInputRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0]
-            if (file) {
-              void importConfigFile(file)
-            }
-            event.currentTarget.value = ''
-          }}
-        />
 
         <input
           ref={imageInputRef}
