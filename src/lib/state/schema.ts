@@ -1,7 +1,12 @@
-export const DEFAULT_IMAGE_URL =
-  '/assets/default-image/porsche.jpeg' as const
-export const DEFAULT_AUDIO_URL =
-  '/assets/default-audio/911-turbo-s-enginesound.wav' as const
+const resolvePublicAssetUrl = (assetPath: string) =>
+  `${import.meta.env.BASE_URL}${assetPath.replace(/^\/+/, '')}`
+
+export const DEFAULT_IMAGE_URL = resolvePublicAssetUrl(
+  'assets/default-image/porsche.jpeg',
+)
+export const DEFAULT_AUDIO_URL = resolvePublicAssetUrl(
+  'assets/default-audio/911-turbo-s-enginesound.wav',
+)
 
 export type AssetSource = {
   kind: 'bundled' | 'uploaded'

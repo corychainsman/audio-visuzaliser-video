@@ -5,8 +5,11 @@ import { type AudioAnalysis } from '@/lib/analysis/audio'
 import { drawFrame, loadImage } from '@/lib/render/preview'
 import { type AssetSource, type EditorConfig } from '@/lib/state/schema'
 
-const FFMPEG_BASE_URL = '/ffmpeg'
-const FFMPEG_MT_BASE_URL = '/ffmpeg-mt'
+const resolvePublicAssetUrl = (assetPath: string) =>
+  `${import.meta.env.BASE_URL}${assetPath.replace(/^\/+/, '')}`
+
+const FFMPEG_BASE_URL = resolvePublicAssetUrl('ffmpeg')
+const FFMPEG_MT_BASE_URL = resolvePublicAssetUrl('ffmpeg-mt')
 const FFMPEG_CORE_FILE_NAME = 'ffmpeg-core.js'
 const FFMPEG_WASM_FILE_NAME = 'ffmpeg-core.wasm'
 const FFMPEG_WORKER_FILE_NAME = 'ffmpeg-core.worker.js'
