@@ -86,7 +86,7 @@ export const createDefaultConfig = (): EditorConfig => {
       timeSec: 6.458333333333329,
     },
     geometry: {
-      width: 1200,
+      width: 1280,
       maxHeight: 720,
       xCenter: 640,
       yCenter: 360,

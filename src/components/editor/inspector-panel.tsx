@@ -2,8 +2,9 @@ import { useRef, type Dispatch, type SetStateAction } from 'react'
 import { Check, Copy, RotateCcw } from 'lucide-react'
 import { Crosshair, Maximize2 } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
+import { AssetsCardSplitMock } from '@/components/editor/assets-card-mocks'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
@@ -27,13 +28,12 @@ type InspectorPanelProps = {
   setConfig: Dispatch<SetStateAction<EditorConfig>>
   command: string
   onResetAll: () => void
+  onUploadAudio: () => void
+  onUploadImage: () => void
   onApplyConfigToken: (value: string) => void
   onCopyConfigToken: () => void
   onCopyCommand: () => void
 }
-
-const sectionTitleClassName =
-  'text-xs uppercase tracking-[0.3em] text-muted-foreground'
 
 export const InspectorPanel = ({
   config,
@@ -42,6 +42,8 @@ export const InspectorPanel = ({
   setConfig,
   command,
   onResetAll,
+  onUploadAudio,
+  onUploadImage,
   onApplyConfigToken,
   onCopyConfigToken,
   onCopyCommand,
@@ -50,10 +52,39 @@ export const InspectorPanel = ({
     setConfig((current) => updater(current))
   const configTokenApplyInputRef = useRef<HTMLTextAreaElement | null>(null)
   const defaultConfig = createDefaultConfig()
+  const resetPlacement = () =>
+    updateConfig((current) => ({
+      ...current,
+      geometry: {
+        ...defaultConfig.geometry,
+      },
+    }))
+  const resetSpectrumStyling = () =>
+    updateConfig((current) => ({
+      ...current,
+      bars: {
+        ...defaultConfig.bars,
+      },
+    }))
+  const resetShadow = () =>
+    updateConfig((current) => ({
+      ...current,
+      shadow: {
+        ...defaultConfig.shadow,
+      },
+    }))
   const inferredBarCount = inferBarCount(
     config.geometry.width,
     config.bars.barSpacingPx,
   )
+  const bundledAssets = defaultConfig.assets
+  const assetsChanged =
+    config.assets.image.kind !== bundledAssets.image.kind
+    || config.assets.image.name !== bundledAssets.image.name
+    || config.assets.image.url !== bundledAssets.image.url
+    || config.assets.audio.kind !== bundledAssets.audio.kind
+    || config.assets.audio.name !== bundledAssets.audio.name
+    || config.assets.audio.url !== bundledAssets.audio.url
   const previewDurationMax = Math.max(1, Math.min(8, durationSec || 8))
   const previewDurationValue = Number.isFinite(config.render.previewDurationSec)
     && config.render.previewDurationSec > 0
@@ -64,23 +95,24 @@ export const InspectorPanel = ({
     <aside className="h-full min-h-0 rounded-2xl border border-white/70 bg-card/75 shadow-[0_25px_80px_-50px_rgba(15,23,42,0.5)] backdrop-blur-md">
       <div className="h-[calc(100vh-8rem)] min-h-[32rem] overflow-y-auto">
         <div className="space-y-4 p-4">
+          <AssetsCardSplitMock
+            image={config.assets.image}
+            audio={config.assets.audio}
+            onReplaceImage={onUploadImage}
+            onReplaceAudio={onUploadAudio}
+            onResetAll={assetsChanged ? onResetAll : undefined}
+          />
+
           <Card className="border-border/70 bg-background/70">
             <CardHeader>
               <div>
-                <p className={sectionTitleClassName}>Geometry</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Geometry</p>
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="font-heading text-2xl">Placement</CardTitle>
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() =>
-                      updateConfig((current) => ({
-                        ...current,
-                        geometry: {
-                          ...createDefaultConfig().geometry,
-                        },
-                      }))
-                    }
+                    onClick={resetPlacement}
                   >
                     <RotateCcw className="size-4" />
                     <span className="sr-only">Reset geometry</span>
@@ -211,7 +243,7 @@ export const InspectorPanel = ({
           <Card className="border-border/70 bg-background/70">
             <CardHeader>
               <div>
-                <p className={sectionTitleClassName}>Bars</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Bars</p>
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -222,14 +254,7 @@ export const InspectorPanel = ({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() =>
-                    updateConfig((current) => ({
-                      ...current,
-                      bars: {
-                        ...defaultConfig.bars,
-                      },
-                    }))
-                  }
+                  onClick={resetSpectrumStyling}
                 >
                   <RotateCcw className="size-4" />
                   <span className="sr-only">Reset spectrum styling</span>
@@ -276,24 +301,26 @@ export const InspectorPanel = ({
                   }))
                 }
               />
-              <div className="space-y-2">
-                <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-                  Bar Color
-                </Label>
-                <Input
-                  type="color"
-                  className="h-12 w-full bg-background/70"
-                  value={config.bars.barColor}
-                  onChange={(event) =>
-                    updateConfig((current) => ({
-                      ...current,
-                      bars: {
-                        ...current.bars,
-                        barColor: event.target.value,
-                      },
-                    }))
-                  }
-                />
+              <div className="rounded-lg border border-border/70 bg-background/70 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                    Bar Color
+                  </Label>
+                  <Input
+                    type="color"
+                    className="size-10 rounded-lg border-border/70 bg-background/70 p-1"
+                    value={config.bars.barColor}
+                    onChange={(event) =>
+                      updateConfig((current) => ({
+                        ...current,
+                        bars: {
+                          ...current.bars,
+                          barColor: event.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
               </div>
               <NumericControl
                 label="Opacity"
@@ -312,7 +339,7 @@ export const InspectorPanel = ({
                 }
               />
               <div className="rounded-lg border border-border/70 bg-background/70 p-3">
-                <div className="flex justify-between">
+                <div className="flex min-h-10 items-center justify-between gap-3">
                   <Label
                     htmlFor="bars-mirror"
                     className="text-xs uppercase tracking-[0.28em] text-muted-foreground"
@@ -356,14 +383,7 @@ export const InspectorPanel = ({
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        onClick={() =>
-                          updateConfig((current) => ({
-                            ...current,
-                            shadow: {
-                              ...defaultConfig.shadow,
-                            },
-                          }))
-                        }
+                        onClick={resetShadow}
                       >
                         <RotateCcw className="size-4" />
                         <span className="sr-only">Reset shadow</span>
@@ -476,7 +496,7 @@ export const InspectorPanel = ({
             <CardHeader>
               <div>
                 <div>
-                  <p className={sectionTitleClassName}>Render</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Render</p>
                   <div className="flex items-center justify-between gap-3">
                     <CardTitle className="font-heading text-2xl">Video output</CardTitle>
                     <Button
@@ -539,6 +559,35 @@ export const InspectorPanel = ({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <Label className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
+                      Output format
+                    </Label>
+                  </div>
+                  <ToggleGroup
+                    type="single"
+                    value={config.render.preferredFormat}
+                    onValueChange={(value) => {
+                      if (value !== 'mp4' && value !== 'webm') {
+                        return
+                      }
+
+                      updateConfig((current) => ({
+                        ...current,
+                        render: {
+                          ...current.render,
+                          preferredFormat: value,
+                        },
+                      }))
+                    }}
+                  >
+                    <ToggleGroupItem value="mp4">MP4</ToggleGroupItem>
+                    <ToggleGroupItem value="webm">WebM</ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
                       FPS
                     </Label>
                   </div>
@@ -570,42 +619,9 @@ export const InspectorPanel = ({
 
           <Card className="border-border/70 bg-background/70">
             <details>
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-              <div>
-                <p className={sectionTitleClassName}>Project</p>
-                <p className="font-heading text-2xl">Assets</p>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                type="button"
-                onClick={(event) => {
-                  event.preventDefault()
-                  onResetAll()
-                }}
-              >
-                <RotateCcw className="size-4" />
-                Reset All
-              </Button>
-            </summary>
-            <div className="space-y-3 border-t border-border/70 px-4 py-4">
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">{config.assets.image.name}</Badge>
-                <Badge variant="outline">{config.assets.audio.name}</Badge>
-              </div>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>Image: {config.assets.image.url}</p>
-                <p>Audio: {config.assets.audio.url}</p>
-              </div>
-            </div>
-            </details>
-          </Card>
-
-          <Card className="border-border/70 bg-background/70">
-            <details>
             <summary className="flex cursor-pointer list-none flex-wrap items-start justify-between gap-3 px-4 py-3">
               <div>
-                <p className={sectionTitleClassName}>Config Token</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Config Token</p>
                 <p className="font-heading text-2xl">Share token</p>
               </div>
             </summary>
@@ -673,7 +689,7 @@ export const InspectorPanel = ({
             <details>
             <summary className="cursor-pointer list-none px-4 py-3">
               <div>
-                <p className={sectionTitleClassName}>Desktop ffmpeg command</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Desktop ffmpeg command</p>
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-heading text-2xl">Copyable shell command</p>
                   <Button

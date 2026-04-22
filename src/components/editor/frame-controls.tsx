@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Play, Sparkles, Square } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Download, Play, Sparkles, Square } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider'
 type FrameControlsProps = {
   durationSec: number
   frameTimeSec: number
+  previewDurationSec: number
   isPlaying: boolean
   isBusy: boolean
   onChange: (value: number) => void
@@ -14,11 +15,13 @@ type FrameControlsProps = {
   onAutoPick: () => void
   onPlay: () => void
   onStop: () => void
+  onDownloadFullVideo: () => void
 }
 
 export const FrameControls = ({
   durationSec,
   frameTimeSec,
+  previewDurationSec,
   isPlaying,
   isBusy,
   onChange,
@@ -26,6 +29,7 @@ export const FrameControls = ({
   onAutoPick,
   onPlay,
   onStop,
+  onDownloadFullVideo,
 }: FrameControlsProps) => (
   <Card className="border-border/70 bg-card/80">
     <CardHeader>
@@ -38,7 +42,8 @@ export const FrameControls = ({
       </div>
     </CardHeader>
     <CardContent className="space-y-4">
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="icon-sm"
@@ -51,14 +56,14 @@ export const FrameControls = ({
         <Button
           onClick={isPlaying ? onStop : onPlay}
           disabled={isBusy}
-          className="h-12 w-32 text-base"
+          className="w-32 text-base"
         >
           <span className="flex w-full items-center justify-center gap-2">
             <span className="flex w-4 justify-center">
               {isPlaying ? <Square className="size-4" /> : <Play className="size-4" />}
             </span>
             <span className="w-10 text-center">
-              {isPlaying ? 'Stop' : 'Play'}
+              {isPlaying ? 'Stop' : `Play ${previewDurationSec.toFixed(0)}s`}
             </span>
           </span>
         </Button>
@@ -77,7 +82,17 @@ export const FrameControls = ({
           onClick={onAutoPick} 
           disabled={isBusy}>
           <Sparkles className="size-4" />
-          Auto
+          Auto-select Best Frame
+        </Button>
+        </div>
+        <Button
+          variant="outline"
+          onClick={onDownloadFullVideo}
+          disabled={isBusy}
+          className="px-5 text-base"
+        >
+          <Download className="size-4" />
+          Download Full Video
         </Button>
       </div>
       <Slider

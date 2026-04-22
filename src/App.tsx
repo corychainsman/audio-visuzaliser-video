@@ -5,16 +5,12 @@ import {
   useRef,
   useState,
 } from 'react'
-import {
-  AlertTriangle,
-} from 'lucide-react'
+import { toast } from 'sonner'
 
-import { ActionBar } from '@/components/editor/action-bar'
 import { FrameControls } from '@/components/editor/frame-controls'
 import { InspectorPanel } from '@/components/editor/inspector-panel'
 import { PreviewSurface } from '@/components/editor/preview-surface'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogClose,
@@ -24,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { analyzeAudioSource, type AudioAnalysis } from '@/lib/analysis/audio'
 import {
@@ -119,6 +116,7 @@ function App() {
   const imageInputRef = useRef<HTMLInputElement | null>(null)
   const audioInputRef = useRef<HTMLInputElement | null>(null)
   const renderAbortControllerRef = useRef<AbortController | null>(null)
+  const lastTimingToastRef = useRef<string | null>(null)
 
   useObjectUrlCleanup(previewUrl)
 
@@ -210,6 +208,33 @@ function App() {
       cancelled = true
     }
   }, [analysis, config])
+
+  useEffect(() => {
+    if (!analysisError) {
+      return
+    }
+
+    toast.error(analysisError, { id: 'analysis-error' })
+    setAnalysisError(null)
+  }, [analysisError])
+
+  useEffect(() => {
+    if (!renderError) {
+      return
+    }
+
+    toast.error(renderError, { id: 'render-error' })
+    setRenderError(null)
+  }, [renderError])
+
+  useEffect(() => {
+    if (!notice) {
+      return
+    }
+
+    toast.success(notice, { id: 'app-notice' })
+    setNotice(null)
+  }, [notice])
 
   const stopPreview = () => {
     setPreviewMode('editor')
@@ -420,6 +445,18 @@ function App() {
         )}`
       : null
 
+  useEffect(() => {
+    if (!renderTimingSummary || lastTimingToastRef.current === renderTimingSummary) {
+      return
+    }
+
+    lastTimingToastRef.current = renderTimingSummary
+    toast(renderTimingSummary, {
+      id: 'render-timing',
+      duration: 6000,
+    })
+  }, [renderTimingSummary])
+
   return (
     <TooltipProvider>
       <div className="min-h-screen px-4 py-5 md:px-6 lg:px-8">
@@ -436,16 +473,10 @@ function App() {
                 onCancel={cancelRender}
               />
 
-              <ActionBar
-                isBusy={isRendering || isAnalyzing}
-                onGenerateVideo={() => void runPreviewRender(true)}
-                onUploadAudio={() => audioInputRef.current?.click()}
-                onUploadImage={() => imageInputRef.current?.click()}
-              />
-
               <FrameControls
                 durationSec={durationSec}
                 frameTimeSec={config.frame.timeSec}
+                previewDurationSec={config.render.previewDurationSec}
                 isPlaying={previewMode === 'preview'}
                 isBusy={isRendering || isAnalyzing}
                 onChange={(value) =>
@@ -478,32 +509,8 @@ function App() {
                 }}
                 onPlay={() => void runPreviewRender(false)}
                 onStop={stopPreview}
+                onDownloadFullVideo={() => void runPreviewRender(true)}
               />
-
-              {analysisError || renderError ? (
-                <Card className="border-destructive/30 bg-destructive/10 text-destructive">
-                  <CardContent className="flex items-start gap-3 p-4 text-sm">
-                    <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                    <p>{analysisError ?? renderError}</p>
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              {notice ? (
-                <Card className="border-border/70 bg-card/75">
-                  <CardContent className="px-4 py-3 text-sm text-muted-foreground">
-                    {notice}
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              {renderTimingSummary ? (
-                <Card className="border-border/70 bg-card/75">
-                  <CardContent className="px-4 py-3 text-sm text-muted-foreground">
-                    {renderTimingSummary}
-                  </CardContent>
-                </Card>
-              ) : null}
             </div>
 
             <InspectorPanel
@@ -513,6 +520,8 @@ function App() {
               setConfig={setConfig}
               command={command}
               onResetAll={() => setResetOpen(true)}
+              onUploadAudio={() => audioInputRef.current?.click()}
+              onUploadImage={() => imageInputRef.current?.click()}
               onApplyConfigToken={(value) => {
                 try {
                   applyConfigToken(value)
@@ -558,6 +567,7 @@ function App() {
             event.currentTarget.value = ''
           }}
         />
+        <Toaster />
 
         <Dialog open={resetOpen} onOpenChange={setResetOpen}>
           <DialogContent>
