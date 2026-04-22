@@ -95,32 +95,31 @@ export const InspectorPanel = ({
       : previewDurationMax
 
   return (
-    <Card className="h-full w-full min-w-0 border border-border/70 bg-card/80 shadow-lg shadow-black/20 backdrop-blur-md md:sticky md:top-0 md:w-[420px] md:min-w-[420px] md:max-w-[420px]">
+    <Card className="h-full w-full min-w-0 py-0 shadow-lg shadow-black/20 backdrop-blur-md md:sticky md:top-0 md:w-[420px] md:min-w-[420px] md:max-w-[420px]">
       <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
-          <AssetsCard
-            image={config.assets.image}
-            audio={config.assets.audio}
-            onReplaceImage={onUploadImage}
-            onReplaceAudio={onUploadAudio}
-            onResetAll={assetsChanged ? onResetAll : undefined}
+        <AssetsCard
+          image={config.assets.image}
+          audio={config.assets.audio}
+          onReplaceImage={onUploadImage}
+          onReplaceAudio={onUploadAudio}
+          onResetAll={assetsChanged ? onResetAll : undefined}
+        />
+        <Card className="border-border/70 bg-background/70">
+          <EditorCardHeader
+            eyebrow="Geometry"
+            title="Placement"
+            action={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={resetPlacement}
+              >
+                <RotateCcw className="size-4" />
+                <span className="sr-only">Reset geometry</span>
+              </Button>
+            }
           />
-
-          <Card className="border-border/70 bg-background/70">
-            <EditorCardHeader
-              eyebrow="Geometry"
-              title="Placement"
-              action={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={resetPlacement}
-                >
-                  <RotateCcw className="size-4" />
-                  <span className="sr-only">Reset geometry</span>
-                </Button>
-              }
-            />
-            <CardContent className="space-y-5">
+          <CardContent className="space-y-5">
               <NumericControl
                 label="Width"
                 value={config.geometry.width}
@@ -652,8 +651,7 @@ export const InspectorPanel = ({
                 <textarea
                   key={configToken}
                   readOnly
-                  rows={1}
-                  className="resize-none w-full rounded-2xl border border-border/70 bg-background px-3 py-2 font-mono text-xs text-foreground outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="resize-none field-sizing-content w-full rounded-2xl border border-border/70 bg-background px-3 py-2 font-mono text-xs text-foreground outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   value={configToken}
                   spellCheck={false}
                 />
@@ -683,8 +681,7 @@ export const InspectorPanel = ({
               >
                 <textarea
                   ref={configTokenApplyInputRef}
-                  rows={1}
-                  className="resize-none w-full rounded-2xl border border-border/70 bg-background px-3 py-2 font-mono text-xs text-foreground outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="resize-none field-sizing-content w-full rounded-2xl border border-border/70 bg-background px-3 py-2 font-mono text-xs text-foreground outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   placeholder="Paste a token to restore a saved config"
                   spellCheck={false}
                 />
