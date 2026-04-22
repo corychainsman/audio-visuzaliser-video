@@ -16,6 +16,7 @@ type PreviewSurfaceProps = {
   progressRatio: number
   progressMessage: string
   onCancel: () => void
+  onEnded: () => void
 }
 
 export const PreviewSurface = ({
@@ -27,6 +28,7 @@ export const PreviewSurface = ({
   progressRatio,
   progressMessage,
   onCancel,
+  onEnded,
 }: PreviewSurfaceProps) => (
   <Card
     className="preview-surface relative w-full border border-border/70 bg-background/60 p-0 shadow-lg shadow-black/20 md:min-h-0 md:flex-1"
@@ -45,6 +47,7 @@ export const PreviewSurface = ({
         className="relative z-10 h-full w-full object-contain"
         src={previewUrl}
         autoPlay
+        onEnded={onEnded}
       />
     ) : null}
     {isBusy ? (

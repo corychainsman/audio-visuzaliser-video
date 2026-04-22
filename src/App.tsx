@@ -104,6 +104,7 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(true)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState<'editor' | 'preview'>('editor')
+  const [previewCacheKey, setPreviewCacheKey] = useState<string | null>(null)
   const [isRendering, setIsRendering] = useState(false)
   const [renderProgress, setRenderProgress] = useState(0)
   const [renderProgressMessage, setRenderProgressMessage] = useState('')
@@ -123,11 +124,12 @@ function App() {
     persistConfig(config)
   }, [config])
 
+  const currentPreviewCacheKey = JSON.stringify(config)
+
   const setConfig: typeof setConfigState = (value) => {
-    if (previewMode === 'preview') {
-      setPreviewMode('editor')
-      setPreviewUrl(null)
-    }
+    setPreviewMode('editor')
+    setPreviewUrl(null)
+    setPreviewCacheKey(null)
 
     setConfigState(value)
   }
@@ -217,7 +219,6 @@ function App() {
 
   const stopPreview = () => {
     setPreviewMode('editor')
-    setPreviewUrl(null)
   }
 
   const cancelRender = () => {
@@ -229,9 +230,19 @@ function App() {
       return
     }
 
+    if (
+      !fullDuration
+      && previewUrl
+      && previewCacheKey === currentPreviewCacheKey
+    ) {
+      setPreviewMode('preview')
+      return
+    }
+
     if (fullDuration) {
       setPreviewMode('editor')
       setPreviewUrl(null)
+      setPreviewCacheKey(null)
     }
 
     setIsRendering(true)
@@ -276,6 +287,7 @@ function App() {
         showNotice(`Saved ${result.fileName}`)
       } else {
         setPreviewUrl(result.url)
+        setPreviewCacheKey(currentPreviewCacheKey)
         setPreviewMode('preview')
       }
     } catch (error) {
@@ -447,8 +459,9 @@ function App() {
                 isBusy={isRendering}
                 progressRatio={renderProgress}
                 progressMessage={renderProgressMessage}
-                onCancel={cancelRender}
-              />
+              onCancel={cancelRender}
+              onEnded={stopPreview}
+            />
 
               <FrameControls
                 durationSec={durationSec}
