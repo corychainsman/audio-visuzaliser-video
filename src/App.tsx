@@ -98,6 +98,36 @@ const useObjectUrlCleanup = (value: string | null) => {
   }, [value])
 }
 
+const CoryLinks = ({ className }: { className?: string }) => (
+  <div className={`flex items-center gap-1 text-sm ${className ?? ''}`.trim()}>
+    <span>Cory Chainsman</span>
+    <Button asChild variant="ghost" size="icon-sm" className="text-muted-foreground">
+      <a
+        href="https://x.com/corychainsman"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Follow @corychainsman on X"
+      >
+        <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden="true">
+          <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.847h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.153h7.594l5.243 6.932zm-1.29 19.494h2.039L6.486 3.238H4.298z" />
+        </svg>
+      </a>
+    </Button>
+    <Button asChild variant="ghost" size="icon-sm" className="text-muted-foreground">
+      <a
+        href="https://github.com/corychainsman/audio-visuzaliser-video"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Open the audio-visuzaliser-video GitHub repository"
+      >
+        <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden="true">
+          <path d="M12 .5C5.649.5.5 5.786.5 12.307c0 5.217 3.292 9.643 7.86 11.204.575.11.786-.255.786-.567 0-.279-.01-1.018-.016-1.997-3.197.714-3.872-1.592-3.872-1.592-.523-1.373-1.277-1.739-1.277-1.739-1.044-.733.08-.718.08-.718 1.154.084 1.761 1.22 1.761 1.22 1.026 1.807 2.692 1.285 3.348.983.104-.763.401-1.285.729-1.58-2.552-.299-5.236-1.31-5.236-5.831 0-1.289.448-2.344 1.182-3.17-.119-.3-.513-1.507.112-3.141 0 0 .965-.318 3.162 1.211A10.72 10.72 0 0 1 12 6.902c.948.005 1.903.132 2.796.389 2.196-1.529 3.16-1.211 3.16-1.211.627 1.634.233 2.841.114 3.14.736.827 1.18 1.882 1.18 3.171 0 4.533-2.688 5.528-5.248 5.82.412.367.78 1.091.78 2.2 0 1.588-.014 2.868-.014 3.258 0 .315.208.682.793.566 4.563-1.564 7.852-5.988 7.852-11.202C23.5 5.786 18.351.5 12 .5" />
+        </svg>
+      </a>
+    </Button>
+  </div>
+)
+
 function App() {
   const [config, setConfigState] = useState<EditorConfig>(() => loadPersistedConfig())
   const [analysis, setAnalysis] = useState<AudioAnalysis | null>(null)
@@ -531,63 +561,11 @@ function App() {
                   }
                 />
               </div>
-              <div className="flex items-center justify-center gap-1 px-4 pb-1 pt-3 text-sm md:hidden">
-                <span>Cory Chainsman</span>
-                <Button variant="ghost" size="icon-sm" className="text-muted-foreground">
-                  <a
-                    href="https://x.com/corychainsman"
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Follow @corychainsman on X"
-                  >
-                    <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden="true">
-                      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.847h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.153h7.594l5.243 6.932zm-1.29 19.494h2.039L6.486 3.238H4.298z" />
-                    </svg>
-                  </a>
-                </Button>
-                <Button variant="ghost" size="icon-sm" className="text-muted-foreground">
-                  <a
-                    href="https://github.com/corychainsman/audio-visuzaliser-video"
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Open the audio-visuzaliser-video GitHub repository"
-                  >
-                    <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden="true">
-                      <path d="M12 .5C5.649.5.5 5.786.5 12.307c0 5.217 3.292 9.643 7.86 11.204.575.11.786-.255.786-.567 0-.279-.01-1.018-.016-1.997-3.197.714-3.872-1.592-3.872-1.592-.523-1.373-1.277-1.739-1.277-1.739-1.044-.733.08-.718.08-.718 1.154.084 1.761 1.22 1.761 1.22 1.026 1.807 2.692 1.285 3.348.983.104-.763.401-1.285.729-1.58-2.552-.299-5.236-1.31-5.236-5.831 0-1.289.448-2.344 1.182-3.17-.119-.3-.513-1.507.112-3.141 0 0 .965-.318 3.162 1.211A10.72 10.72 0 0 1 12 6.902c.948.005 1.903.132 2.796.389 2.196-1.529 3.16-1.211 3.16-1.211.627 1.634.233 2.841.114 3.14.736.827 1.18 1.882 1.18 3.171 0 4.533-2.688 5.528-5.248 5.82.412.367.78 1.091.78 2.2 0 1.588-.014 2.868-.014 3.258 0 .315.208.682.793.566 4.563-1.564 7.852-5.988 7.852-11.202C23.5 5.786 18.351.5 12 .5" />
-                    </svg>
-                  </a>
-                </Button>
-              </div>
+              <CoryLinks className="justify-center px-4 pb-1 pt-3 md:hidden" />
             </div>
           </main>
         </div>
-        <div className="hidden items-center gap-1 px-4 pb-1 text-sm md:fixed md:bottom-0 md:left-1/2 md:z-50 md:flex md:-translate-x-1/2">
-          <span>Cory Chainsman</span>
-          <Button variant="ghost" size="icon-sm" className="text-muted-foreground">
-            <a
-              href="https://x.com/corychainsman"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Follow @corychainsman on X"
-            >
-              <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden="true">
-                <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.847h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.153h7.594l5.243 6.932zm-1.29 19.494h2.039L6.486 3.238H4.298z" />
-              </svg>
-            </a>
-          </Button>
-          <Button variant="ghost" size="icon-sm" className="text-muted-foreground">
-            <a
-              href="https://github.com/corychainsman/audio-visuzaliser-video"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Open the audio-visuzaliser-video GitHub repository"
-            >
-              <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden="true">
-                <path d="M12 .5C5.649.5.5 5.786.5 12.307c0 5.217 3.292 9.643 7.86 11.204.575.11.786-.255.786-.567 0-.279-.01-1.018-.016-1.997-3.197.714-3.872-1.592-3.872-1.592-.523-1.373-1.277-1.739-1.277-1.739-1.044-.733.08-.718.08-.718 1.154.084 1.761 1.22 1.761 1.22 1.026 1.807 2.692 1.285 3.348.983.104-.763.401-1.285.729-1.58-2.552-.299-5.236-1.31-5.236-5.831 0-1.289.448-2.344 1.182-3.17-.119-.3-.513-1.507.112-3.141 0 0 .965-.318 3.162 1.211A10.72 10.72 0 0 1 12 6.902c.948.005 1.903.132 2.796.389 2.196-1.529 3.16-1.211 3.16-1.211.627 1.634.233 2.841.114 3.14.736.827 1.18 1.882 1.18 3.171 0 4.533-2.688 5.528-5.248 5.82.412.367.78 1.091.78 2.2 0 1.588-.014 2.868-.014 3.258 0 .315.208.682.793.566 4.563-1.564 7.852-5.988 7.852-11.202C23.5 5.786 18.351.5 12 .5" />
-              </svg>
-            </a>
-          </Button>
-        </div>
+        <CoryLinks className="hidden px-4 pb-1 md:fixed md:bottom-0 md:left-1/2 md:z-50 md:flex md:-translate-x-1/2" />
 
         <input
           ref={imageInputRef}

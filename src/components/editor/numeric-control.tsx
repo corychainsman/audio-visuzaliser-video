@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,15 +39,8 @@ export const NumericControl = ({
   onNudge,
 }: NumericControlProps) => {
   const usesCustomInputDisplay = inputDisplayValue !== undefined
-  const [draftValue, setDraftValue] = useState(inputDisplayValue ?? String(value))
-
-  useEffect(() => {
-    if (!usesCustomInputDisplay) {
-      return
-    }
-
-    setDraftValue(inputDisplayValue ?? String(value))
-  }, [inputDisplayValue, usesCustomInputDisplay, value])
+  const [draftValue, setDraftValue] = useState<string | null>(null)
+  const displayedCustomValue = inputDisplayValue ?? String(value)
 
   return (
     <div className="space-y-3">
@@ -80,7 +73,7 @@ export const NumericControl = ({
             type={usesCustomInputDisplay ? 'text' : 'number'}
             inputMode={usesCustomInputDisplay ? 'numeric' : undefined}
             className="w-24 bg-background/70 text-right"
-            value={usesCustomInputDisplay ? draftValue : value}
+            value={usesCustomInputDisplay ? (draftValue ?? displayedCustomValue) : value}
             min={usesCustomInputDisplay ? undefined : min}
             max={usesCustomInputDisplay ? undefined : max}
             step={usesCustomInputDisplay ? undefined : step}
@@ -90,16 +83,20 @@ export const NumericControl = ({
                 return
               }
 
-              setDraftValue(event.target.value)
-              const nextValue = onInputDisplayChange?.(event.target.value) ?? Number(event.target.value)
+              const nextRawValue = event.target.value
+              const nextValue = onInputDisplayChange?.(nextRawValue) ?? Number(nextRawValue)
 
               if (nextValue !== null && Number.isFinite(nextValue)) {
+                setDraftValue(null)
                 onChange(nextValue)
+                return
               }
+
+              setDraftValue(nextRawValue)
             }}
             onBlur={() => {
               if (usesCustomInputDisplay) {
-                setDraftValue(inputDisplayValue ?? String(value))
+                setDraftValue(null)
               }
             }}
             onKeyDown={(event) => {
