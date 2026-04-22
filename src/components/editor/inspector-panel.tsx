@@ -604,12 +604,12 @@ export const InspectorPanel = ({
 
           <Card className="border-border/70 bg-background/70">
             <details>
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+            <summary className="flex cursor-pointer list-none flex-wrap items-start justify-between gap-3 px-4 py-3">
               <div>
                 <p className={sectionTitleClassName}>Normalized Config</p>
                 <p className="font-heading text-2xl">Export surface</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button
                   variant="outline"
                   size="sm"
