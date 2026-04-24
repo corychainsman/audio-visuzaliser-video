@@ -54,22 +54,24 @@ export const FrameControls = ({
         </Button>
         <Button
           variant="outline"
-          size="icon-sm"
+          size="sm"
           onClick={onDownloadFullVideo}
           disabled={isBusy}
-          aria-label="Download full video"
+          className="shrink-0"
         >
           <Download className="size-4" />
+          Export
         </Button>
         <Drawer>
           <DrawerTrigger asChild>
             <Button
               variant="outline"
-              size="icon-sm"
+              size="sm"
               disabled={isBusy}
-              aria-label="More frame controls"
+              className="shrink-0"
             >
               <Ellipsis className="size-4" />
+              Controls
             </Button>
           </DrawerTrigger>
           <DrawerContent>

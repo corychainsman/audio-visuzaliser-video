@@ -1,5 +1,7 @@
 import {
   createDefaultConfig,
+  getMaxBarSpacing,
+  inferBarSpacing,
   normalizePersistedConfig,
   type EditorConfig,
 } from '@/lib/state/schema'
@@ -84,7 +86,11 @@ const encodeConfigValues = (config: EditorConfig) => {
     geometryMaxHeight: normalized.geometry.maxHeight - 10,
     geometryXCenter: normalized.geometry.xCenter,
     geometryYCenter: normalized.geometry.yCenter,
-    barSpacing: normalized.bars.barSpacingPx,
+    barSpacing: inferBarSpacing(
+      normalized.geometry.width,
+      normalized.bars.barCount,
+      getMaxBarSpacing(normalized.render.width),
+    ),
     cornerRadius: normalized.bars.cornerRadiusPx,
     barColor: colorToInt(normalized.bars.barColor),
     barOpacity: clamp(Math.round(normalized.bars.opacity * 100), 0, 100),

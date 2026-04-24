@@ -1,4 +1,4 @@
-import { useRef, type Dispatch, type SetStateAction } from 'react'
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { AlignCenterHorizontal, AlignCenterVertical, Check, Copy, RotateCcw, StretchHorizontal, StretchVertical } from 'lucide-react'
 
 import { AssetsCard } from '@/components/editor/assets-card'
@@ -19,6 +19,9 @@ import {
   clamp,
   createDefaultConfig,
   inferBarCount,
+  inferBarSpacing,
+  normalizeBarCount,
+  getMaxBarSpacing,
   type EditorConfig,
 } from '@/lib/state/schema'
 
@@ -49,15 +52,26 @@ export const InspectorPanel = ({
   onCopyConfigToken,
   onCopyCommand,
 }: InspectorPanelProps) => {
+  const [barLayoutTab, setBarLayoutTab] = useState<'spacing' | 'width'>('spacing')
   const updateConfig = (updater: (current: EditorConfig) => EditorConfig) =>
     setConfig((current) => updater(current))
   const configTokenApplyInputRef = useRef<HTMLTextAreaElement | null>(null)
   const defaultConfig = createDefaultConfig()
+  const maxBarSpacing = getMaxBarSpacing(config.render.width)
   const resetPlacement = () =>
     updateConfig((current) => ({
       ...current,
       geometry: {
         ...defaultConfig.geometry,
+        width: current.render.width,
+      },
+      bars: {
+        ...current.bars,
+        barCount: normalizeBarCount(
+          current.render.width,
+          current.render.width,
+          current.bars.barCount,
+        ),
       },
     }))
   const resetSpectrumStyling = () =>
@@ -74,9 +88,12 @@ export const InspectorPanel = ({
         ...defaultConfig.shadow,
       },
     }))
-  const inferredBarCount = inferBarCount(
+  const inferredBarCount = config.bars.barCount
+  const minBarCount = inferBarCount(config.geometry.width, maxBarSpacing)
+  const inferredBarSpacing = inferBarSpacing(
     config.geometry.width,
-    config.bars.barSpacingPx,
+    inferredBarCount,
+    maxBarSpacing,
   )
   const bundledAssets = defaultConfig.assets
   const assetsChanged =
@@ -136,6 +153,14 @@ export const InspectorPanel = ({
                           ...current.geometry,
                           width: current.render.width,
                         },
+                        bars: {
+                          ...current.bars,
+                          barCount: normalizeBarCount(
+                            current.render.width,
+                            current.render.width,
+                            current.bars.barCount,
+                          ),
+                        },
                       })),
                   },
                 ]}
@@ -145,6 +170,14 @@ export const InspectorPanel = ({
                     geometry: {
                       ...current.geometry,
                       width: clamp(Math.round(value), 20, current.render.width),
+                    },
+                    bars: {
+                      ...current.bars,
+                      barCount: normalizeBarCount(
+                        clamp(Math.round(value), 20, current.render.width),
+                        current.render.width,
+                        current.bars.barCount,
+                      ),
                     },
                   }))
                 }
@@ -255,30 +288,90 @@ export const InspectorPanel = ({
               }
             />
             <CardContent className="space-y-5">
-              <NumericControl
-                label="Spacing"
-                value={config.bars.barSpacingPx}
-                min={0}
-                max={config.render.width/15}
-                onChange={(value) =>
-                  updateConfig((current) => ({
-                    ...current,
-                    bars: {
-                      ...current.bars,
-                      barSpacingPx: clamp(Math.round(value), 0, config.render.width/15),
-                    },
-                  }))
-                }
-              />
-              <InspectorFieldGroup
-                label={
-                  <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-                    Inferred Bar Count
-                  </Label>
-                }
-                action={<Badge variant="outline">{inferredBarCount}</Badge>}
-                compact
-              />
+              <div className="space-y-4">
+                <div className="inline-flex w-full items-center rounded-xl border border-border/70 bg-background/70 p-1">
+                  <Button
+                    type="button"
+                    variant={barLayoutTab === 'spacing' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setBarLayoutTab('spacing')}
+                  >
+                    Spacing
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={barLayoutTab === 'width' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setBarLayoutTab('width')}
+                  >
+                    Width
+                  </Button>
+                </div>
+                {barLayoutTab === 'spacing' ? (
+                  <div className="space-y-5">
+                    <NumericControl
+                      label="Spacing"
+                      value={inferredBarSpacing}
+                      min={0}
+                      max={maxBarSpacing}
+                      onChange={(value) =>
+                        updateConfig((current) => ({
+                          ...current,
+                          bars: {
+                            ...current.bars,
+                            barCount: inferBarCount(
+                              current.geometry.width,
+                              clamp(Math.round(value), 0, maxBarSpacing),
+                            ),
+                          },
+                        }))
+                      }
+                    />
+                    <InspectorFieldGroup
+                      label={
+                        <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                          Inferred Bar Count
+                        </Label>
+                      }
+                      action={<Badge variant="outline">{inferredBarCount}</Badge>}
+                      compact
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    <NumericControl
+                      label="Count"
+                      value={inferredBarCount}
+                      min={minBarCount}
+                      max={Math.max(minBarCount, Math.round(config.geometry.width))}
+                      onChange={(value) =>
+                        updateConfig((current) => ({
+                          ...current,
+                          bars: {
+                            ...current.bars,
+                            barCount: normalizeBarCount(
+                              current.geometry.width,
+                              current.render.width,
+                              value,
+                            ),
+                          },
+                        }))
+                      }
+                    />
+                    <InspectorFieldGroup
+                      label={
+                        <Label className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                          Inferred Bar Spacing
+                        </Label>
+                      }
+                      action={<Badge variant="outline">{inferredBarSpacing}</Badge>}
+                      compact
+                    />
+                  </div>
+                )}
+              </div>
               <NumericControl
                 label="Corner Radius"
                 value={config.bars.cornerRadiusPx}
@@ -644,7 +737,7 @@ export const InspectorPanel = ({
                     }}
                   >
                     <Copy className="size-4" />
-                    Copy
+                    Copy Token
                   </Button>
                 }
               >
@@ -709,7 +802,7 @@ export const InspectorPanel = ({
                     }}
                   >
                     <Copy className="size-4" />
-                    Copy
+                    Copy Command
                   </Button>
                 }
               />

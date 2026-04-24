@@ -1,7 +1,8 @@
 import { getBinsAtTime, type AudioAnalysis } from '@/lib/analysis/audio'
 import {
   clamp,
-  inferBarCount,
+  getMaxBarSpacing,
+  inferBarSpacing,
   type AssetSource,
   type EditorConfig,
 } from '@/lib/state/schema'
@@ -161,12 +162,14 @@ export const drawFrame = ({
 
   context.drawImage(session.staticCanvas, 0, 0)
 
-  const barCount = inferBarCount(
+  const barCount = config.bars.barCount
+  const barSpacingPx = inferBarSpacing(
     config.geometry.width,
-    config.bars.barSpacingPx,
+    barCount,
+    getMaxBarSpacing(config.render.width),
   )
   const bins = getBinsAtTime(analysis, timeSec, barCount)
-  const totalGap = config.bars.barSpacingPx * (barCount - 1)
+  const totalGap = barSpacingPx * (barCount - 1)
   const barWidth = Math.max(
     1,
     (config.geometry.width - totalGap) / barCount,
@@ -179,7 +182,7 @@ export const drawFrame = ({
   applyShadow(context, config)
 
   bins.forEach((value, index) => {
-    const x = blockStart + index * (barWidth + config.bars.barSpacingPx)
+    const x = blockStart + index * (barWidth + barSpacingPx)
     const visibleHeight = Math.max(2, value * config.geometry.maxHeight)
     const heightAbove = config.bars.mirror ? visibleHeight / 2 : visibleHeight
     const topY = baselineY - heightAbove

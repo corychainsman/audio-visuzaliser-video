@@ -36,7 +36,7 @@ export type EditorConfig = {
     yCenter: number
   }
   bars: {
-    barSpacingPx: number
+    barCount: number
     cornerRadiusPx: number
     barColor: string
     opacity: number
@@ -59,10 +59,19 @@ export type EditorConfig = {
   }
 }
 
+export type NormalizableEditorConfig = Partial<Omit<EditorConfig, 'bars'>> & {
+  bars?: Partial<EditorConfig['bars']> & {
+    barSpacingPx?: number
+  }
+}
+
 export const PREVIEW_DURATION_INFINITE = 0
 
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
+
+export const getMaxBarSpacing = (renderWidth: number) =>
+  Math.max(0, Math.floor(renderWidth / 15))
 
 export const createDefaultConfig = (): EditorConfig => {
   const renderWidth = 1280
@@ -92,7 +101,7 @@ export const createDefaultConfig = (): EditorConfig => {
       yCenter: 360,
     },
     bars: {
-      barSpacingPx: 5,
+      barCount: 214,
       cornerRadiusPx: 20,
       barColor: '#ffffff',
       opacity: 0.67,
@@ -121,15 +130,53 @@ export const inferBarCount = (
   barSpacingPx: number,
 ) => {
   const safeWidth = Math.max(1, Math.round(width))
-  const safeSpacing = clamp(Math.round(barSpacingPx), 0, 32)
+  const safeSpacing = clamp(Math.round(barSpacingPx), 0, safeWidth - 1)
 
   return Math.max(1, Math.floor((safeWidth + safeSpacing) / (1 + safeSpacing)))
 }
 
+export const inferBarSpacing = (
+  width: number,
+  barCount: number,
+  maxSpacingPx = Number.POSITIVE_INFINITY,
+) => {
+  const safeWidth = Math.max(1, Math.round(width))
+  const safeCount = clamp(Math.round(barCount), 1, safeWidth)
+
+  if (safeCount <= 1) {
+    return clamp(safeWidth - 1, 0, maxSpacingPx)
+  }
+
+  const rawSpacing = (safeWidth - safeCount) / (safeCount - 1)
+
+  return clamp(Math.round(rawSpacing), 0, maxSpacingPx)
+}
+
+export const normalizeBarCount = (
+  width: number,
+  renderWidth: number,
+  barCount: number,
+) => {
+  const safeWidth = Math.max(1, Math.round(width))
+  const maxSpacing = getMaxBarSpacing(renderWidth)
+  const minBarCount = inferBarCount(safeWidth, maxSpacing)
+
+  return clamp(Math.round(barCount), minBarCount, safeWidth)
+}
+
 export const normalizeConfig = (
-  candidate: Partial<EditorConfig> | null | undefined,
+  candidate: NormalizableEditorConfig | null | undefined,
 ): EditorConfig => {
   const defaults = createDefaultConfig()
+  const candidateGeometryWidth =
+    candidate?.geometry?.width ?? defaults.geometry.width
+  const legacyBarCount =
+    candidate?.bars?.barCount
+    ?? (
+      candidate?.bars?.barSpacingPx !== undefined
+        ? inferBarCount(candidateGeometryWidth, candidate.bars.barSpacingPx)
+        : undefined
+    )
 
   const config: EditorConfig = {
     ...defaults,
@@ -153,8 +200,7 @@ export const normalizeConfig = (
       ...candidate?.geometry,
     },
     bars: {
-      barSpacingPx:
-        candidate?.bars?.barSpacingPx ?? defaults.bars.barSpacingPx,
+      barCount: legacyBarCount ?? defaults.bars.barCount,
       cornerRadiusPx:
         candidate?.bars?.cornerRadiusPx ?? defaults.bars.cornerRadiusPx,
       barColor: candidate?.bars?.barColor ?? defaults.bars.barColor,
@@ -172,7 +218,11 @@ export const normalizeConfig = (
   }
 
   config.frame.timeSec = Math.max(0, config.frame.timeSec)
-  config.geometry.width = clamp(Math.round(config.geometry.width), 20, 1200)
+  config.geometry.width = clamp(
+    Math.round(config.geometry.width),
+    20,
+    config.render.width,
+  )
   config.geometry.maxHeight = clamp(
     Math.round(config.geometry.maxHeight),
     10,
@@ -188,7 +238,11 @@ export const normalizeConfig = (
     0,
     config.render.height,
   )
-  config.bars.barSpacingPx = clamp(Math.round(config.bars.barSpacingPx), 0, 32)
+  config.bars.barCount = normalizeBarCount(
+    config.geometry.width,
+    config.render.width,
+    config.bars.barCount,
+  )
   config.bars.cornerRadiusPx = clamp(
     Math.round(config.bars.cornerRadiusPx),
     0,
@@ -209,7 +263,7 @@ export const normalizeConfig = (
 }
 
 export const normalizePersistedConfig = (
-  candidate: Partial<EditorConfig> | null | undefined,
+  candidate: NormalizableEditorConfig | null | undefined,
 ) => {
   const normalized = normalizeConfig(candidate)
 
